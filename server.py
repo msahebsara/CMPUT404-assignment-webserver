@@ -32,6 +32,10 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def handle(self):
         self.data = self.request.recv(1024).strip()
         print ("Got a request of: %s\n" % self.data)
+        self.request_arr = [itm.decode("utf-8") for itm in self.data.split()]
+        self.request_method = request_arr[0]
+        if(self.request_method != 'GET'):
+            print("TODO: Return 405")
         self.request.sendall(bytearray("OK",'utf-8'))
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 #  coding: utf-8 
-import socketserver
+import socketserver, os
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -32,11 +32,43 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def handle(self):
         self.data = self.request.recv(1024).strip()
         print ("Got a request of: %s\n" % self.data)
-        self.request_arr = [itm.decode("utf-8") for itm in self.data.split()]
-        self.request_method = request_arr[0]
-        if(self.request_method != 'GET'):
-            print("TODO: Return 405")
-        self.request.sendall(bytearray("OK",'utf-8'))
+        request_arr = [itm.decode("utf-8") for itm in self.data.split()]
+        request_method = request_arr[0]
+        request_path = request_arr[1]
+        www_dir = os.getcwd() + '/www'
+        file_serve = 'index.html'
+
+        print('requestmethod', request_method)
+        print('request_path', request_path)
+
+        if(request_method != 'GET'):
+            return self.generate_response(405)
+
+        if(request_path.endswith('/')):
+            path_serve = www_dir + request_path + file_serve
+        else: 
+            path_serve = www_dir + request_path
+
+        print('pathtoserve', path_serve)
+        
+        if(os.path.isfile(path_serve)):
+            return self.generate_response(200, open(path_serve, 'r').read())
+        else: 
+            return self.generate_response(404)
+
+
+    def generate_response(self, status, content = False):
+        if(status == 405):
+            payload = "HTTP/1.1 405 Method Not Allowed\r\nConnection: close\r\n\r\n"
+
+        if(status == 404):
+            payload = "HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n"
+
+        if(status == 200):
+            payload = "HTTP/1.1 200 OK\r\n\r\n"
+
+        if(content): payload += content
+        self.request.sendall(payload.encode())
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080

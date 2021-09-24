@@ -46,11 +46,12 @@ class MyWebServer(socketserver.BaseRequestHandler):
         else: 
             path_serve = www_dir + request_path
         
-        if(os.path.isfile(path_serve)):
+        abs_path_serve = os.path.abspath(path_serve)
+        if(os.path.isfile(abs_path_serve) and abs_path_serve.startswith(www_dir)):
             file_type = path_serve.split(".")[-1]
             content_type = f"Content-Type: text/{file_type}; charset=UTF-8"
-            return self.generate_response(200, content_type, open(path_serve, 'r').read())
-        elif (os.path.isdir(path_serve) and os.path.isfile(path_serve + "/index.html")):
+            return self.generate_response(200, content_type, open(abs_path_serve, 'r').read())
+        elif (os.path.isdir(abs_path_serve) and os.path.isfile(abs_path_serve + "/index.html")):
             location = f"Location: {request_path}/"
             return self.generate_response(301, location)
         else:

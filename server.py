@@ -1,7 +1,7 @@
 #  coding: utf-8 
 import socketserver, os
 
-# Copyright 2013 Abram Hindle, Eddie Antonio Santos
+# Copyright 2021 Abram Hindle, Eddie Antonio Santos, Mehrshad Sahebsara
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,9 +38,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
         www_dir = os.getcwd() + '/www'
         file_serve = 'index.html'
 
-        print('requestmethod', request_method)
-        print('request_path', request_path)
-
         if(request_method != 'GET'):
             return self.generate_response(405)
 
@@ -48,26 +45,34 @@ class MyWebServer(socketserver.BaseRequestHandler):
             path_serve = www_dir + request_path + file_serve
         else: 
             path_serve = www_dir + request_path
-
-        print('pathtoserve', path_serve)
         
         if(os.path.isfile(path_serve)):
-            return self.generate_response(200, open(path_serve, 'r').read())
-        else: 
+            return self.generate_response(200, False, open(path_serve, 'r').read())
+        elif (os.path.isdir(path_serve)):
+            location = f"Location: {request_path}/"
+            return self.generate_response(301, location)
+        else:
             return self.generate_response(404)
 
 
-    def generate_response(self, status, content = False):
+    def generate_response(self, status, headerContent = False, bodyContent = False):
         if(status == 405):
-            payload = "HTTP/1.1 405 Method Not Allowed\r\nConnection: close\r\n\r\n"
+            payload = "HTTP/1.1 405 Method Not Allowed\r\nConnection: close\r\n"
 
         if(status == 404):
-            payload = "HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n"
+            payload = "HTTP/1.1 404 Not Found\r\nConnection: close\r\n"
 
         if(status == 200):
-            payload = "HTTP/1.1 200 OK\r\n\r\n"
+            payload = "HTTP/1.1 200 OK\r\n"
 
-        if(content): payload += content
+        if(status == 301):
+            payload = "HTTP/1.1 301 Moved Permanently\r\n"
+
+        if(headerContent): 
+            payload += headerContent + "\r\n\r\n" 
+        else:
+            payload += "\r\n"
+        if(bodyContent): payload += (bodyContent + "\r\n")
         self.request.sendall(payload.encode())
 
 if __name__ == "__main__":

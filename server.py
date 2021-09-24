@@ -47,7 +47,9 @@ class MyWebServer(socketserver.BaseRequestHandler):
             path_serve = www_dir + request_path
         
         if(os.path.isfile(path_serve)):
-            return self.generate_response(200, False, open(path_serve, 'r').read())
+            file_type = path_serve.split(".")[-1]
+            content_type = f"Content-Type: text/{file_type}; charset=UTF-8"
+            return self.generate_response(200, content_type, open(path_serve, 'r').read())
         elif (os.path.isdir(path_serve)):
             location = f"Location: {request_path}/"
             return self.generate_response(301, location)
